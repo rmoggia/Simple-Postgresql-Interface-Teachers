@@ -1,5 +1,8 @@
 # PG Admin Lite
 
+[![🇮🇹 Italiano](https://img.shields.io/badge/🇮🇹-Italiano-green?style=flat-square)](README.md)
+[![🇬🇧 English](https://img.shields.io/badge/🇬🇧-English-blue?style=flat-square)](README.en.md)
+
 Interfaccia web leggera per PostgreSQL costruita con Flask e psycopg2.
 
 ## Requisiti
