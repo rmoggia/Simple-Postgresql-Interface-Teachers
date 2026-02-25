@@ -1,0 +1,108 @@
+{% extends 'base.html' %}
+{% block title %}{{ schema }}.{{ table }} — PG Admin Lite{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <div class="breadcrumb">
+        <a href="{{ url_for('dashboard', schema=schema) }}">{{ schema }}</a>
+        <span>›</span>
+        <strong>{{ table }}</strong>
+    </div>
+    <div class="page-header-actions">
+        <a href="{{ url_for('structure', schema=schema, table=table) }}" class="btn btn-secondary">Struttura</a>
+        <a href="{{ url_for('insert_row', schema=schema, table=table) }}" class="btn btn-primary">+ Nuova riga</a>
+    </div>
+</div>
+
+<div class="table-info-bar">
+    <span>{{ total }} righe totali</span>
+    <span>Pagina {{ page }} di {{ total_pages }}</span>
+</div>
+
+{% if rows %}
+<div class="table-wrapper">
+    <table class="data-table">
+        <thead>
+            <tr>
+                {% for col in columns %}
+                <th>
+                    <a href="{{ url_for('table_view', schema=schema, table=table,
+                        order_col=col[0],
+                        order_dir='DESC' if order_col == col[0] and order_dir == 'ASC' else 'ASC',
+                        page=1) }}" class="sort-link">
+                        {{ col[0] }}
+                        {% if order_col == col[0] %}
+                            {{ '↓' if order_dir == 'ASC' else '↑' }}
+                        {% endif %}
+                    </a>
+                </th>
+                {% endfor %}
+                <th class="actions-col">Azioni</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for row in rows %}
+            <tr>
+                {% for col in columns %}
+                <td>
+                    {% set val = row[col[0]] %}
+                    {% if val is none %}
+                        <span class="null-val">NULL</span>
+                    {% elif val | string | length > 80 %}
+                        <span class="truncated" title="{{ val }}">{{ val | string | truncate(80) }}</span>
+                    {% else %}
+                        {{ val }}
+                    {% endif %}
+                </td>
+                {% endfor %}
+                <td class="actions-col">
+                    {% if pk_cols %}
+                    <div class="row-actions">
+                        <a href="{{ url_for('edit_row', schema=schema, table=table,
+                            **dict(zip(pk_cols, [row[k]|string for k in pk_cols] | map(attribute='__class__') | list))
+                            ) }}?{% for k in pk_cols %}pk_{{ k }}={{ row[k] }}&{% endfor %}"
+                           class="btn btn-xs btn-edit">Modifica</a>
+                        <form method="POST" action="{{ url_for('delete_row', schema=schema, table=table) }}"
+                              onsubmit="return confirm('Eliminare questa riga?');" style="display:inline">
+                            {% for k in pk_cols %}
+                            <input type="hidden" name="pk_{{ k }}" value="{{ row[k] }}">
+                            {% endfor %}
+                            <button type="submit" class="btn btn-xs btn-delete">Elimina</button>
+                        </form>
+                    </div>
+                    {% endif %}
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+
+<!-- Pagination -->
+{% if total_pages > 1 %}
+<div class="pagination">
+    {% if page > 1 %}
+    <a href="{{ url_for('table_view', schema=schema, table=table, page=page-1, order_col=order_col, order_dir=order_dir) }}"
+       class="page-btn">← Prec</a>
+    {% endif %}
+
+    {% for p in range([1, page-2]|max, [total_pages+1, page+3]|min) %}
+    <a href="{{ url_for('table_view', schema=schema, table=table, page=p, order_col=order_col, order_dir=order_dir) }}"
+       class="page-btn {% if p == page %}active{% endif %}">{{ p }}</a>
+    {% endfor %}
+
+    {% if page < total_pages %}
+    <a href="{{ url_for('table_view', schema=schema, table=table, page=page+1, order_col=order_col, order_dir=order_dir) }}"
+       class="page-btn">Succ →</a>
+    {% endif %}
+</div>
+{% endif %}
+
+{% else %}
+<div class="empty-state">
+    <span class="empty-icon">◻</span>
+    <p>La tabella è vuota.</p>
+    <a href="{{ url_for('insert_row', schema=schema, table=table) }}" class="btn btn-primary">Inserisci la prima riga</a>
+</div>
+{% endif %}
+{% endblock %}

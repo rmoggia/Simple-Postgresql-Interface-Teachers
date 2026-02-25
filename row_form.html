@@ -1,0 +1,52 @@
+{% extends 'base.html' %}
+{% block title %}{{ 'Modifica' if action == 'edit' else 'Nuova riga' }} — {{ table }}{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <div class="breadcrumb">
+        <a href="{{ url_for('dashboard', schema=schema) }}">{{ schema }}</a>
+        <span>›</span>
+        <a href="{{ url_for('table_view', schema=schema, table=table) }}">{{ table }}</a>
+        <span>›</span>
+        <strong>{{ 'Modifica riga' if action == 'edit' else 'Nuova riga' }}</strong>
+    </div>
+</div>
+
+<div class="form-container">
+    <form method="POST" action="{% if action == 'edit' %}{{ url_for('edit_row', schema=schema, table=table) }}?{% for k in pk_cols %}pk_{{ k }}={{ pk_vals[loop.index0] }}&{% endfor %}{% else %}{{ url_for('insert_row', schema=schema, table=table) }}{% endif %}">
+
+        {% if action == 'edit' %}
+            {% for k in pk_cols %}
+            <input type="hidden" name="pk_{{ k }}" value="{{ pk_vals[loop.index0] }}">
+            {% endfor %}
+        {% endif %}
+
+        <div class="fields-grid">
+            {% for col in columns %}
+            <div class="form-group">
+                <label for="col_{{ col[0] }}">
+                    {{ col[0] }}
+                    <span class="col-type">{{ col[1] }}{% if col[2] %}({{ col[2] }}){% endif %}</span>
+                    {% if col[3] == 'NO' %}<span class="required-badge">*</span>{% endif %}
+                </label>
+                <input
+                    type="text"
+                    id="col_{{ col[0] }}"
+                    name="{{ col[0] }}"
+                    value="{{ row[col[0]] if row and row.get(col[0]) is not none else '' }}"
+                    placeholder="{% if col[4] %}default: {{ col[4] }}{% elif col[3] == 'YES' %}NULL{% endif %}"
+                    {% if col[0] in pk_cols and action == 'edit' %}class="pk-field" title="Chiave primaria"{% endif %}
+                >
+            </div>
+            {% endfor %}
+        </div>
+
+        <div class="form-footer">
+            <a href="{{ url_for('table_view', schema=schema, table=table) }}" class="btn btn-secondary">Annulla</a>
+            <button type="submit" class="btn btn-primary">
+                {{ 'Salva modifiche' if action == 'edit' else 'Inserisci riga' }}
+            </button>
+        </div>
+    </form>
+</div>
+{% endblock %}

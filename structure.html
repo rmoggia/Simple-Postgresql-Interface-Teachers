@@ -1,0 +1,97 @@
+{% extends 'base.html' %}
+{% block title %}Struttura — {{ table }}{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <div class="breadcrumb">
+        <a href="{{ url_for('dashboard', schema=schema) }}">{{ schema }}</a>
+        <span>›</span>
+        <a href="{{ url_for('table_view', schema=schema, table=table) }}">{{ table }}</a>
+        <span>›</span>
+        <strong>Struttura</strong>
+    </div>
+</div>
+
+<div class="structure-layout">
+    <!-- Columns Table -->
+    <section class="structure-section">
+        <h3 class="section-title">Colonne</h3>
+        <div class="table-wrapper">
+            <table class="data-table">
+                <thead>
+                    <tr>
+                        <th>Nome</th>
+                        <th>Tipo</th>
+                        <th>Lunghezza</th>
+                        <th>Nullable</th>
+                        <th>Default</th>
+                        <th>PK</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for col in columns %}
+                    <tr>
+                        <td><strong>{{ col[0] }}</strong></td>
+                        <td><code>{{ col[1] }}</code></td>
+                        <td>{{ col[2] or '—' }}</td>
+                        <td>{{ 'Sì' if col[3] == 'YES' else 'No' }}</td>
+                        <td><code>{{ col[4] or '—' }}</code></td>
+                        <td>{% if col[0] in pk_cols %}<span class="pk-badge">PK</span>{% endif %}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </section>
+
+    <!-- DDL Editor -->
+    <section class="structure-section">
+        <h3 class="section-title">Esegui DDL</h3>
+        <p class="section-desc">Esegui istruzioni <code>ALTER TABLE</code>, <code>CREATE INDEX</code>, <code>DROP COLUMN</code>, ecc.</p>
+        <form method="POST" action="{{ url_for('execute_ddl') }}">
+            <textarea
+                name="sql"
+                class="sql-textarea"
+                rows="6"
+                placeholder="-- Esempi:&#10;ALTER TABLE {{ schema }}.{{ table }} ADD COLUMN nuova_col TEXT;&#10;ALTER TABLE {{ schema }}.{{ table }} DROP COLUMN vecchia_col;&#10;CREATE INDEX ON {{ schema }}.{{ table }} (colonna);&#10;ALTER TABLE {{ schema }}.{{ table }} ALTER COLUMN colonna SET NOT NULL;"
+                spellcheck="false"
+            ></textarea>
+            <div class="editor-toolbar">
+                <button type="submit" class="btn btn-danger"
+                        onclick="return confirm('Attenzione: le operazioni DDL sono irreversibili. Continuare?')">
+                    ⚡ Esegui DDL
+                </button>
+                <span class="editor-hint warning">⚠ Le operazioni DDL sono irreversibili</span>
+            </div>
+        </form>
+    </section>
+
+    <!-- Quick DDL Templates -->
+    <section class="structure-section">
+        <h3 class="section-title">Template rapidi</h3>
+        <div class="ddl-templates">
+            <button class="template-btn" onclick="fillDDL('ALTER TABLE {{ schema }}.{{ table }} ADD COLUMN nome_colonna TEXT;')">
+                + Aggiungi colonna
+            </button>
+            <button class="template-btn" onclick="fillDDL('ALTER TABLE {{ schema }}.{{ table }} DROP COLUMN nome_colonna;')">
+                - Rimuovi colonna
+            </button>
+            <button class="template-btn" onclick="fillDDL('CREATE INDEX idx_{{ table }}_col ON {{ schema }}.{{ table }} (nome_colonna);')">
+                + Crea indice
+            </button>
+            <button class="template-btn danger" onclick="fillDDL('DROP TABLE {{ schema }}.{{ table }};')">
+                ✕ Drop tabella
+            </button>
+        </div>
+    </section>
+</div>
+
+<script>
+function fillDDL(sql) {
+    const textarea = document.querySelector('textarea[name=sql]');
+    textarea.value = sql;
+    textarea.focus();
+    textarea.setSelectionRange(sql.length, sql.length);
+}
+</script>
+{% endblock %}

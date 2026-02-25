@@ -1,0 +1,50 @@
+{% extends 'base.html' %}
+{% block title %}Dashboard — PG Admin Lite{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h2 class="page-title">Tabelle</h2>
+</div>
+
+<div class="dashboard-layout">
+    <!-- Schema Selector -->
+    <aside class="schema-sidebar">
+        <div class="sidebar-label">Schema</div>
+        {% for s in schemas %}
+        <a href="{{ url_for('dashboard', schema=s) }}"
+           class="schema-item {% if s == current_schema %}active{% endif %}">
+            <span class="schema-icon">◈</span> {{ s }}
+        </a>
+        {% endfor %}
+    </aside>
+
+    <!-- Tables List -->
+    <section class="tables-section">
+        {% if tables %}
+        <div class="tables-grid">
+            {% for table_name, table_type in tables %}
+            <div class="table-card">
+                <div class="table-card-header">
+                    <span class="table-type-badge {% if table_type == 'VIEW' %}view{% endif %}">
+                        {{ 'VIEW' if table_type == 'VIEW' else 'TABLE' }}
+                    </span>
+                </div>
+                <div class="table-name">{{ table_name }}</div>
+                <div class="table-actions">
+                    <a href="{{ url_for('table_view', schema=current_schema, table=table_name) }}"
+                       class="btn btn-sm btn-primary">Dati</a>
+                    <a href="{{ url_for('structure', schema=current_schema, table=table_name) }}"
+                       class="btn btn-sm btn-secondary">Struttura</a>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        {% else %}
+        <div class="empty-state">
+            <span class="empty-icon">◻</span>
+            <p>Nessuna tabella nello schema <strong>{{ current_schema }}</strong>.</p>
+        </div>
+        {% endif %}
+    </section>
+</div>
+{% endblock %}

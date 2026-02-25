@@ -1,0 +1,98 @@
+{% extends 'base.html' %}
+{% block title %}Query SQL — PG Admin Lite{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h2 class="page-title">Editor SQL</h2>
+</div>
+
+<div class="query-layout">
+    <div class="query-editor-area">
+        <form method="POST" action="{{ url_for('query') }}">
+            <div class="editor-wrapper">
+                <textarea
+                    name="sql"
+                    id="sql-editor"
+                    class="sql-textarea"
+                    placeholder="Scrivi la tua query SQL qui...&#10;&#10;Esempi:&#10;  SELECT * FROM public.users LIMIT 10;&#10;  INSERT INTO ...&#10;  UPDATE ... SET ... WHERE ...&#10;  CREATE TABLE ..."
+                    spellcheck="false"
+                >{{ sql }}</textarea>
+            </div>
+            <div class="editor-toolbar">
+                <button type="submit" class="btn btn-primary">▶ Esegui</button>
+                <button type="button" class="btn btn-secondary" onclick="document.getElementById('sql-editor').value=''">✕ Pulisci</button>
+                <span class="editor-hint">Ctrl+Enter per eseguire</span>
+            </div>
+        </form>
+    </div>
+
+    <div class="query-result-area">
+        {% if error %}
+        <div class="query-error">
+            <div class="query-error-title">⚠ Errore</div>
+            <pre class="error-message">{{ error }}</pre>
+        </div>
+        {% elif result %}
+            {% if result.type == 'select' %}
+            <div class="result-header">
+                <span class="result-count">{{ result.rowcount }} righe restituite</span>
+            </div>
+            {% if result.rows %}
+            <div class="table-wrapper">
+                <table class="data-table">
+                    <thead>
+                        <tr>
+                            {% for col in result.columns %}
+                            <th>{{ col }}</th>
+                            {% endfor %}
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for row in result.rows %}
+                        <tr>
+                            {% for col in result.columns %}
+                            <td>
+                                {% if row[col] is none %}
+                                    <span class="null-val">NULL</span>
+                                {% else %}
+                                    {{ row[col] }}
+                                {% endif %}
+                            </td>
+                            {% endfor %}
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            {% else %}
+            <div class="empty-state">Nessun risultato.</div>
+            {% endif %}
+            {% else %}
+            <div class="query-success">
+                ✓ Query eseguita — {{ result.rowcount }} righe interessate.
+            </div>
+            {% endif %}
+        {% else %}
+        <div class="result-placeholder">
+            <span>I risultati appariranno qui</span>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+<script>
+document.getElementById('sql-editor').addEventListener('keydown', function(e) {
+    if (e.ctrlKey && e.key === 'Enter') {
+        this.closest('form').submit();
+    }
+    // Tab key inserts spaces
+    if (e.key === 'Tab') {
+        e.preventDefault();
+        const start = this.selectionStart;
+        const end = this.selectionEnd;
+        this.value = this.value.substring(0, start) + '    ' + this.value.substring(end);
+        this.selectionStart = this.selectionEnd = start + 4;
+    }
+});
+</script>
+{% endblock %}
